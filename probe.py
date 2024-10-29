@@ -28,5 +28,5 @@ def get_interface_stats(interface):
 
 # Executa o sniffer na interface 'eth0'
 if __name__ == "__main__":
-    interface = 'eth0'  # Pode mudar para qualquer interface, como 'lo'
+    interface = 'en0'  # Pode mudar para qualquer interface, como 'lo'
     start_sniffer(interface)
