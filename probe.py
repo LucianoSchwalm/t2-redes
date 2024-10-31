@@ -30,3 +30,4 @@ def get_interface_stats(interface):
 if __name__ == "__main__":
     interface = 'en0'  # Pode mudar para qualquer interface, como 'lo'
     start_sniffer(interface)
+    get_interface_stats(interface)
