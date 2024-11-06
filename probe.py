@@ -1,33 +1,59 @@
+#!/usr/bin/python3
+
+import threading
 from scapy.all import sniff
-import psutil
+import time
+import sys
+import datetime
+import socket
+import os
 
-# Função de callback para processar cada pacote capturado
-def process_packet(packet):
-    print(packet.summary())  # Exibe um resumo do pacote
+# Shared variable to store the packet count
+packet_count = 0
+# Lock for thread-safe access to shared variable
+count_lock = threading.Lock()
 
-# Captura pacotes na interface 'eth0', por exemplo
-def start_sniffer(interface):
-    print(f"Sniffing on {interface}...")
-    sniff(iface=interface, prn=process_packet, count=10)  # Captura 10 pacotes
+# Function to handle each sniffed packet
+def packet_handler(packet):
+    global packet_count
+    with count_lock:
+        packet_count += 1
 
+# Sniffer thread function
+def packet_sniffer():
+    sniff(prn=packet_handler,iface="eth0", store=False, promisc=True)
 
-def get_interface_stats(interface):
-    net_io = psutil.net_io_counters(pernic=True)
-    if interface in net_io:
-        stats = net_io[interface]
-        print(f"Interface: {interface}")
-        print(f"Bytes Sent: {stats.bytes_sent}")
-        print(f"Bytes Received: {stats.bytes_recv}")
-        print(f"Packets Sent: {stats.packets_sent}")
-        print(f"Packets Received: {stats.packets_recv}")
-        print(f"Errors In: {stats.errin}")
-        print(f"Errors Out: {stats.errout}")
-    else:
-        print(f"Interface {interface} não encontrada!")
+def main():
 
+    while True:
 
-# Executa o sniffer na interface 'eth0'
+        line = sys.stdin.readline()
+        if not line:
+            raise EOFError()
+        line = line.strip()
+
+        if 'PING' in line:
+            print("PONG")
+
+            # Create and start the sniffer thread
+            sniffer_thread = threading.Thread(target=packet_sniffer)
+            sniffer_thread.daemon = True  # This makes the thread exit when the main program exits
+            sniffer_thread.start()
+
+        elif 'get' in line:
+            oid = sys.stdin.readline()
+            oid = oid.strip()
+            if oid == ".1.3.6.1.2.1.16.1.1.1.1.1":
+                print(".1.3.6.1.2.1.16.1.1.1.1.1")
+                print("integer")
+                with count_lock:
+                    print(f"{packet_count}")
+            else:
+                print("NONE")
+        else:
+            print("NONE")
+
+        sys.stdout.flush()
+
 if __name__ == "__main__":
-    interface = 'en0'  # Pode mudar para qualquer interface, como 'lo'
-    start_sniffer(interface)
-    get_interface_stats(interface)
+    main()
